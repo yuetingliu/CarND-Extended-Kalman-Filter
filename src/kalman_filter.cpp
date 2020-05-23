@@ -3,8 +3,8 @@
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
-/* 
- * Please note that the Eigen library does not initialize 
+/*
+ * Please note that the Eigen library does not initialize
  *   VectorXd or MatrixXd objects with zeros upon creation.
  */
 
@@ -23,19 +23,55 @@ void KalmanFilter::Init(VectorXd &x_in, MatrixXd &P_in, MatrixXd &F_in,
 }
 
 void KalmanFilter::Predict() {
-  /**
-   * TODO: predict the state
-   */
+  x_ = F_ * x_;
+  P_ = F_ * P_ * F_.transpose() + Q_;
 }
 
 void KalmanFilter::Update(const VectorXd &z) {
-  /**
-   * TODO: update the state by using Kalman Filter equations
-   */
+  VectorXd y_ = z - H_ * x_;
+  MatrixXd H_T = H_.transpose();
+  MatrixXd S_ = H_ * P_ * H_T + R_;
+  MatrixXd K_ = P_ * H_T * S_.inverse();
+
+  // update state
+  x_ = x_ + (K_ * y_);
+  MatrixXd I_;
+  long x_size = x_.size();
+  I_ = MatrixXd::Identity(x_size, x_size);
+  P_ = (I_ - K_ * H_) * P_;
 }
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
-  /**
-   * TODO: update the state by using Extended Kalman Filter equations
-   */
+  // convert Cartesian coordinates to polar coordinates
+  // get Cartesian coordinates
+  float px = x_[0];
+  float py = x_[1];
+  float vx = x_[2];
+  float vy = x_[3];
+
+  // calculate hx
+  float size_z = z.size();
+  VectorXd hx(size_z);
+  // pre-compute some terms to prevent repeated computation
+  float c1 = sqrt(px*px + py*py);
+  float phi = atan(py/px);
+  hx << c1, phi, (px*vx + py*vy)/c1;
+
+  // calcuate y
+  VectorXd y_ = z - hx;
+
+  // calculate Jacobian matrix
+  MatrixXd Hj = tool.CalculateJacobian(x_);
+
+  // calculate S, K
+  MatrixXd HjT = Hj.transpose();
+  MatrixXd S_ = Hj * P_ * HjT + R_;
+  MatrixXd K_ = P_ * HjT * S_.inverse();
+
+  // update
+  x_ = x_ + (K_ * y_);
+  MatrixXd I_;
+  long x_size = x_.size();
+  I_ = MatrixXd::Identity(x_size, x_size);
+  P_ = (I_ - K_ * Hj) * P_;
 }
