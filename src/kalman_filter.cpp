@@ -1,5 +1,9 @@
 #include "kalman_filter.h"
+#include <math.h>
+#include <iostream>
 
+using std::cout;
+using std::endl;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
@@ -54,11 +58,21 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   VectorXd hx(size_z);
   // pre-compute some terms to prevent repeated computation
   float c1 = sqrt(px*px + py*py);
+  if (fabs(c1) < 0.0001) {
+    cout << "Zero division error" << endl;
+    return;
+  }
   float phi = atan(py/px);
   hx << c1, phi, (px*vx + py*vy)/c1;
 
   // calcuate y
   VectorXd y_ = z - hx;
+  // make sure phi in y_ is in range(-pi, pi)
+  if (y_[1] < -M_PI) {
+    y_[1]  += 2*M_PI;
+  } else if (y_[1] > M_PI){
+    y_[1]  -= M_PI;
+  };
 
   // calculate Jacobian matrix
   MatrixXd Hj = tool.CalculateJacobian(x_);
