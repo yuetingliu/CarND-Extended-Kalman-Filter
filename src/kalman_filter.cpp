@@ -17,12 +17,14 @@ KalmanFilter::KalmanFilter() {}
 KalmanFilter::~KalmanFilter() {}
 
 void KalmanFilter::Init(VectorXd &x_in, MatrixXd &P_in, MatrixXd &F_in,
-                        MatrixXd &H_in, MatrixXd &R_in, MatrixXd &Q_in) {
+                        MatrixXd &H_in, MatrixXd &RL_in,
+                        MatrixXd &RR_in, MatrixXd &Q_in) {
   x_ = x_in;
   P_ = P_in;
   F_ = F_in;
   H_ = H_in;
-  R_ = R_in;
+  R_laser = RL_in;
+  R_radar = RR_in;
   Q_ = Q_in;
 }
 
@@ -34,13 +36,13 @@ void KalmanFilter::Predict() {
 void KalmanFilter::Update(const VectorXd &z) {
   VectorXd y_ = z - H_ * x_;
   MatrixXd H_T = H_.transpose();
-  MatrixXd S_ = H_ * P_ * H_T + R_;
+  MatrixXd S_ = H_ * P_ * H_T + R_laser;
   MatrixXd K_ = P_ * H_T * S_.inverse();
 
   // update state
   x_ = x_ + (K_ * y_);
   MatrixXd I_;
-  long x_size = x_.size();
+  int x_size = x_.size();
   I_ = MatrixXd::Identity(x_size, x_size);
   P_ = (I_ - K_ * H_) * P_;
 }
@@ -54,7 +56,7 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   float vy = x_[3];
 
   // calculate hx
-  float size_z = z.size();
+  int size_z = z.size();
   VectorXd hx(size_z);
   // pre-compute some terms to prevent repeated computation
   float c1 = sqrt(px*px + py*py);
@@ -72,20 +74,20 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
     y_[1]  += 2*M_PI;
   } else if (y_[1] > M_PI){
     y_[1]  -= M_PI;
-  };
+  }
 
   // calculate Jacobian matrix
   MatrixXd Hj = tool.CalculateJacobian(x_);
 
   // calculate S, K
   MatrixXd HjT = Hj.transpose();
-  MatrixXd S_ = Hj * P_ * HjT + R_;
+  MatrixXd S_ = Hj * P_ * HjT + R_radar;
   MatrixXd K_ = P_ * HjT * S_.inverse();
 
   // update
   x_ = x_ + (K_ * y_);
   MatrixXd I_;
-  long x_size = x_.size();
+  int x_size = x_.size();
   I_ = MatrixXd::Identity(x_size, x_size);
   P_ = (I_ - K_ * Hj) * P_;
 }
