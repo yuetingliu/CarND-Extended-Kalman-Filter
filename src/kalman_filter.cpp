@@ -73,7 +73,7 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   if (y_[1] < -M_PI) {
     y_[1]  += 2*M_PI;
   } else if (y_[1] > M_PI){
-    y_[1]  -= M_PI;
+    y_[1]  -= 2 * M_PI;
   }
 
   // calculate Jacobian matrix
