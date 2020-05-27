@@ -64,7 +64,7 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
     cout << "Zero division error" << endl;
     return;
   }
-  float phi = atan(py/px);
+  float phi = atan2(py, px);
   hx << c1, phi, (px*vx + py*vy)/c1;
 
   // calcuate y
