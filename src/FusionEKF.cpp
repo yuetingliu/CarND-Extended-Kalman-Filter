@@ -53,7 +53,10 @@ FusionEKF::FusionEKF() {
         0, 1, 0, 1,
         0, 0, 1, 0,
         0, 0, 0, 1;
-  // set acceleration noise
+  /*
+  * set acceleration noise
+  * Use noise_ax = 9 and noise_ay = 9 for Q matrix.
+  */
   noise_ax = 9;
   noise_ay = 9;
 
@@ -115,7 +118,6 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    * Update the state transition matrix F according to the new elapsed time.
    * Convert time from microseconds to seconds.
    * Update the process noise covariance matrix.
-   * Use noise_ax = 9 and noise_ay = 9 for your Q matrix.
    */
   float dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;
   previous_timestamp_ = measurement_pack.timestamp_;
